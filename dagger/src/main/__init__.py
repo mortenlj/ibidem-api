@@ -5,6 +5,8 @@ from dagger import dag, function, object_type
 from jinja2 import Template
 
 
+DEVELOP_VERSION = "0.1.0+develop"
+
 @object_type
 class IbidemApi:
     @function
@@ -16,23 +18,25 @@ class IbidemApi:
             .with_workdir("/app")
             .with_file("/app/pyproject.toml", source.file("pyproject.toml"))
             .with_file("/app/uv.lock", source.file("uv.lock"))
+            .with_file("/app/README.rst", source.file("README.rst"))
+            .with_new_file("/app/ibidem_api/__init__.py", f"VERSION = \"0.0.1+ignore\"")
             .with_exec(["uv", "sync", "--no-install-project", "--no-editable"])
         )
 
     @function
-    def build(self, source: dagger.Directory, platform: dagger.Platform | None = None) -> dagger.Container:
+    def build(self, source: dagger.Directory, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION) -> dagger.Container:
         """Build the application"""
         return (
             self.deps(source, platform)
             .with_directory("/app/ibidem_api", source.directory("ibidem_api"))
-            .with_file("/app/README.rst", source.file("README.rst"))
+            .with_new_file("/app/ibidem_api/__init__.py", f"VERSION = \"1.{version}\"")
             .with_exec(["uv", "sync", "--frozen", "--no-editable"])
         )
 
     @function
-    def docker(self, source: dagger.Directory, platform: dagger.Platform | None = None) -> dagger.Container:
+    def docker(self, source: dagger.Directory, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION) -> dagger.Container:
         """Build the Docker container"""
-        build = self.build(source, platform)
+        build = self.build(source, platform, version)
         return (
             dag.container(platform=platform)
             .from_("python:3.12-slim")
@@ -44,7 +48,7 @@ class IbidemApi:
 
     @function
     async def publish(
-            self, source: dagger.Directory, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = "develop"
+            self, source: dagger.Directory, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION
     ) -> list[str]:
         """Publish the application container after building and testing it on-the-fly"""
         platforms = [
@@ -56,14 +60,14 @@ class IbidemApi:
         for v in ["latest", version]:
             variants = []
             for platform in platforms:
-                variants.append(self.docker(source, platform))
+                variants.append(self.docker(source, platform, version))
             cos.append(manifest.publish(f"{image}:{v}", platform_variants=variants))
 
         return await asyncio.gather(*cos)
 
     @function
     async def assemble_manifests(
-            self, source: dagger.Directory, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = "develop"
+            self, source: dagger.Directory, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION
     ) -> dagger.File:
         """Assemble manifests"""
         template_dir = source.directory("deploy")

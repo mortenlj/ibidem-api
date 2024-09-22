@@ -6,7 +6,7 @@ import sys
 import uvicorn
 from fastapi import FastAPI
 
-from ibidem_api import probes, api
+from ibidem_api import probes, api, VERSION
 from ibidem_api.core.config import settings
 from ibidem_api.core.logging import get_log_config
 
@@ -26,6 +26,7 @@ tags_metadata.extend(api.tags_metadata)
 app = FastAPI(
     title=TITLE,
     openapi_tags=tags_metadata,
+    version=VERSION,
 )
 app.include_router(probes.router, prefix="/_")
 app.include_router(api.router, prefix="/api")
