@@ -4,8 +4,13 @@ from fastapi import APIRouter, status
 
 LOG = logging.getLogger(__name__)
 
+tags_metadata = [
+    {"name": "probes", "description": "Health and readiness probes"},
+]
+
 router = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"detail": "Not found"}},
+    tags=["probes"],
 )
 
 
