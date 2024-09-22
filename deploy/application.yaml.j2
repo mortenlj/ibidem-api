@@ -14,11 +14,11 @@ spec:
   probes:
     liveness:
       http:
-        initialDelaySeconds: 100
+        initialDelaySeconds: 10
         portName: http
         path: /_/healthy
     readiness:
       http:
-        initialDelaySeconds: 100
+        initialDelaySeconds: 10
         portName: http
         path: /_/ready
