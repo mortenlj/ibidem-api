@@ -16,7 +16,7 @@ class IbidemApi:
             .with_workdir("/app")
             .with_file("/app/pyproject.toml", source.file("pyproject.toml"))
             .with_file("/app/uv.lock", source.file("uv.lock"))
-            .with_exec(["uv", "sync", "--no-install-project", "--no-editable", "--verbose"])
+            .with_exec(["uv", "sync", "--no-install-project", "--no-editable"])
         )
 
     @function
@@ -26,7 +26,7 @@ class IbidemApi:
             self.deps(source, platform)
             .with_directory("/app/ibidem_api", source.directory("ibidem_api"))
             .with_file("/app/README.rst", source.file("README.rst"))
-            .with_exec(["uv", "sync", "--frozen", "--no-editable", "--verbose"])
+            .with_exec(["uv", "sync", "--frozen", "--no-editable"])
         )
 
     @function
