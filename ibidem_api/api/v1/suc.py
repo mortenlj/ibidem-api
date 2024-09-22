@@ -49,7 +49,6 @@ async def dietpi(req: Request):
         elif line.startswith("G_REMOTE_VERSION_RC="):
             patch = int(line.split("=")[1])
     target = req.url_for("dietpi_version", version=f"{major}.{minor}.{patch}")
-    LOG.info(f"Redirecting to {target}")
     return str(target)
 
 
