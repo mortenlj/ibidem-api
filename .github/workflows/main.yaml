@@ -36,7 +36,6 @@ jobs:
       pull-requests: write
     env:
       VERSION: "${{ needs.setup.outputs.VERSION }}"
-      DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Login to GitHub Packages Docker Registry
@@ -51,12 +50,14 @@ jobs:
           version: "latest"
           verb: call
           args: publish --source=. "--image=${IMAGE}" "--version=${VERSION}"
+          cloud-token: "${{ secrets.DAGGER_CLOUD_TOKEN }}"
       - name: Assemble manifests
         uses: dagger/dagger-for-github@v6
         with:
           version: "latest"
           verb: call
           args: assemble-manifests --source=. "--image=${IMAGE}" "--version=${VERSION}" --output=deploy.yaml
+          cloud-token: "${{ secrets.DAGGER_CLOUD_TOKEN }}"
       - name: Save manifests for later deploy
         uses: actions/upload-artifact@v4
         with:
