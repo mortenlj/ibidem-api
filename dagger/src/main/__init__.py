@@ -5,7 +5,7 @@ from dagger import dag, function, object_type
 from jinja2 import Template
 
 
-DEVELOP_VERSION = "0.1.0+develop"
+DEVELOP_VERSION = "0.1.0-develop"
 
 @object_type
 class IbidemApi:
@@ -29,7 +29,7 @@ class IbidemApi:
         return (
             self.deps(source, platform)
             .with_directory("/app/ibidem_api", source.directory("ibidem_api"))
-            .with_new_file("/app/ibidem_api/__init__.py", f"VERSION = \"1.{version}\"")
+            .with_new_file("/app/ibidem_api/__init__.py", f"VERSION = \"1.{version.replace("-", "+")}\"")
             .with_exec(["uv", "sync", "--frozen", "--no-editable"])
         )
 

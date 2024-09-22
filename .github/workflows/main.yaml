@@ -20,7 +20,7 @@ jobs:
       - name: "Set image version"
         id: constants
         run: |
-          export version="$(date +%Y%m%d%H%M%S)+$(git describe --always --dirty --exclude '*')"
+          export version="$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')"
           echo "VERSION=${version}" >> ${GITHUB_OUTPUT}
     outputs:
       VERSION: "${{ steps.constants.outputs.VERSION }}"
