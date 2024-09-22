@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ibidem-api
+  namespace: default
+  labels:
+    app: ibidem-api
+data:
+  bind_address: "0.0.0.0"
+  mode: "Release"
+  root_path: "/"

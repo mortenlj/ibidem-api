@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  labels:
+    app: ibidem-api
+  name: ibidem-api
+  namespace: default
+spec:
+  rules:
+  - host: api.ibidem.no
+    http:
+      paths:
+      - backend:
+          service:
+            name: ibidem-api
+            port:
+              name: http
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - api.ibidem.no
+    secretName: cert-ingress-api-ibidem-no

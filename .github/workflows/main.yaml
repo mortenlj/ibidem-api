@@ -1,0 +1,122 @@
+name: Build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  setup:
+    name: Set variables
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Set image version"
+        id: constants
+        run: |
+          export version="$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')"
+          echo "VERSION=${version}" >> ${GITHUB_OUTPUT}
+    outputs:
+      VERSION: "${{ steps.constants.outputs.VERSION }}"
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+      checks: write
+      pull-requests: write
+    env:
+      VERSION: "${{ needs.setup.outputs.VERSION }}"
+      DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GitHub Packages Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push images
+        uses: dagger/dagger-for-github@v6
+        with:
+          version: "latest"
+          verb: call
+          args: publish --source=. "--image=${IMAGE}" "--version=${VERSION}"
+      - name: Assemble manifests
+        uses: dagger/dagger-for-github@v6
+        with:
+          version: "latest"
+          verb: call
+          args: assemble-manifests --source=. "--image=${IMAGE}" "--version=${VERSION}" --output=deploy.yaml
+      - name: Save manifests for later deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifests
+          path: deploy.yaml
+  deploy:
+    name: Deploy
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - build
+    steps:
+      - name: Download manifests from build
+        uses: actions/download-artifact@v4
+        with:
+          name: manifests
+      - name: Install and configure kubectl
+        run: |
+          mkdir -p /tmp/kubectl
+          cd /tmp/kubectl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+          echo "$(<kubectl.sha256)  kubectl" | sha256sum --check
+          chmod +x kubectl
+          echo "${{ secrets.KUBECONFIG }}" > /tmp/kubectl/kubeconfig
+          echo "KUBECONFIG=/tmp/kubectl/kubeconfig" >> ${GITHUB_ENV}
+          echo "PATH=/tmp/kubectl:${PATH}" >> ${GITHUB_ENV}
+      - id: join-zt
+        name: Join ZeroTier network
+        uses: mortenlj/zerotier-actions/join-zt@main
+        with:
+          network_id: ${{ secrets.ZEROTIER_NETWORK_ID }}
+          api_accesstoken: ${{ secrets.ZEROTIER_API_ACCESSTOKEN }}
+          ping_target: k3s2.home.ibidem.no
+      - name: Run kubectl apply
+        run: |
+          kubectl apply --namespace=default --context=k3s2-home --filename=deploy.yaml --selector=app=ibidem-api --prune=true --wait=true --timeout=60s
+      - name: Leave ZeroTier network
+        if: always()
+        uses: mortenlj/zerotier-actions/leave-zt@main
+        with:
+          node_id: ${{ steps.join-zt.outputs.node_id }}
+          network_id: ${{ secrets.ZEROTIER_NETWORK_ID }}
+          api_accesstoken: ${{ secrets.ZEROTIER_API_ACCESSTOKEN }}
+  cleanup:
+    name: Cleanup
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      packages: write
+    steps:
+      - name: Cleanup main images
+        uses: dataaxiom/ghcr-cleanup-action@v1.0.13
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          keep-n-tagged: 5
+          older-than: 2 weeks
+          delete-untagged: true
+          delete-ghost-images: true
+          delete-orphaned-images: true
+          delete-partial-images: true
