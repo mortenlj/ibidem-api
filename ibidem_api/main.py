@@ -45,6 +45,7 @@ def main():
             host=settings.bind_address,
             port=settings.port,
             proxy_headers=True,
+            forwarded_allow_ips="*",
             root_path=settings.root_path,
             log_config=get_log_config(log_format, log_level),
             log_level=log_level,
