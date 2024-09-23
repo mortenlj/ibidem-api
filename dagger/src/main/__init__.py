@@ -19,7 +19,7 @@ class IbidemApi:
             .with_file("/app/pyproject.toml", source.file("pyproject.toml"))
             .with_file("/app/uv.lock", source.file("uv.lock"))
             .with_file("/app/README.rst", source.file("README.rst"))
-            .with_new_file("/app/ibidem_api/__init__.py", f"VERSION = \"0.0.1+ignore\"")
+            .with_new_file("/app/ibidem_api/__init__.py", "VERSION = \"0.0.1+ignore\"")
             .with_exec(["uv", "sync", "--no-install-project", "--no-editable"])
         )
 

@@ -36,7 +36,7 @@ async def dietpi(req: Request):
     resp = httpx.get(DIETPI_VERSION_URL)
     try:
         resp.raise_for_status()
-    except httpx.HTTPStatusError as e:
+    except httpx.HTTPStatusError:
         return JSONResponse("Failed to get version information from DietPi",
                             status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     data = resp.text

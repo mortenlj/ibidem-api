@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+# To enable this pre-commit hook in a new checkout, create a symlink from .git/hook/pre-commit to this file.
+
+uv run ruff check
