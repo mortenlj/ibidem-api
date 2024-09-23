@@ -1,5 +1,4 @@
 import logging
-from pprint import pformat
 
 import httpx
 from fastapi import APIRouter, status, Request
@@ -50,9 +49,6 @@ async def dietpi(req: Request):
         elif line.startswith("G_REMOTE_VERSION_RC="):
             patch = int(line.split("=")[1])
     target = req.url_for("dietpi_version", version=f"{major}.{minor}.{patch}")
-
-    LOG.info("HEADERS: %s", pformat(req.headers))
-
     return str(target)
 
 
