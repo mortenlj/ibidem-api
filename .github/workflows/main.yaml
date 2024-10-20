@@ -16,7 +16,7 @@ jobs:
     name: Set variables
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: "Set image version"
         id: constants
         run: |
@@ -37,30 +37,30 @@ jobs:
     env:
       VERSION: "${{ needs.setup.outputs.VERSION }}"
     steps:
-      - uses: actions/checkout@v4
-      - uses: chartboost/ruff-action@v1
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - uses: chartboost/ruff-action@e18ae971ccee1b2d7bbef113930f00c670b78da4 # v1
       - name: Login to GitHub Packages Docker Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push images
-        uses: dagger/dagger-for-github@v6
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6
         with:
           version: "latest"
           verb: call
           args: publish --source=. "--image=${IMAGE}" "--version=${VERSION}"
           cloud-token: "${{ secrets.DAGGER_CLOUD_TOKEN }}"
       - name: Assemble manifests
-        uses: dagger/dagger-for-github@v6
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6
         with:
           version: "latest"
           verb: call
           args: assemble-manifests --source=. "--image=${IMAGE}" "--version=${VERSION}" --output=deploy.yaml
           cloud-token: "${{ secrets.DAGGER_CLOUD_TOKEN }}"
       - name: Save manifests for later deploy
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         with:
           name: manifests
           path: deploy.yaml
@@ -73,7 +73,7 @@ jobs:
       - build
     steps:
       - name: Download manifests from build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
           name: manifests
       - name: Install and configure kubectl
@@ -113,7 +113,7 @@ jobs:
       packages: write
     steps:
       - name: Cleanup main images
-        uses: dataaxiom/ghcr-cleanup-action@v1.0.13
+        uses: dataaxiom/ghcr-cleanup-action@98b4022383d6ddb70ccbf6a378b4d8c67a60f066 # v1.0.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           keep-n-tagged: 5
