@@ -1,0 +1,16 @@
+
+[tasks.dbuild]
+run = "dagger call build"
+description = "Build the project in dagger"
+
+[tasks.publish]
+run = "dagger call publish"
+description = "Publish the project to ttl.sh"
+
+[tasks.push]
+run = "git push"
+depends = ["publish"]
+
+[tools]
+python = "3.13"
+uv = "latest"
