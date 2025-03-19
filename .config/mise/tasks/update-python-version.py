@@ -31,7 +31,7 @@ def _update_mise(version):
 
 
 def _sync_uv():
-    print(f"Syncing virtualenv ...")
+    print("Syncing virtualenv ...")
     subprocess.run(["uv", "sync"], check=True)
 
 
