@@ -9,7 +9,11 @@ metadata:
 spec:
   image: "{{ image }}:{{ version }}"
   ports:
-    - kind: http
+    http:
+      ingress:
+        - pathType: Prefix
+          paths:
+            - /
       port: 3000
   probes:
     liveness:
