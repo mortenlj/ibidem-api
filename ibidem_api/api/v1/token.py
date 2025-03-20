@@ -7,8 +7,9 @@ from joserfc import jwt
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry
 from lightkube import Client
-from lightkube.models.authentication_v1 import TokenRequest, TokenRequestSpec
+from lightkube.models.authentication_v1 import TokenRequestSpec
 from lightkube.models.meta_v1 import ObjectMeta
+from lightkube.resources.core_v1 import ServiceAccountToken
 from pydantic import BaseModel
 
 LOG = logging.getLogger(__name__)
@@ -91,21 +92,11 @@ async def token(
 
 
 async def _get_k8s_token(kube, name, namespace):
-    token_request = TokenRequest(
-        apiVersion="authentication.k8s.io/v1",
-        kind="TokenRequest",
-        metadata=ObjectMeta(
-            name=name,
-            namespace=namespace,
-        ),
+    service_account_token = ServiceAccountToken(
+        metadata=ObjectMeta(name=name, namespace=namespace),
         spec=TokenRequestSpec(audiences=[]),
     )
-    req = kube._client._client.build_request(
-        "POST",
-        f"/api/v1/namespaces/{namespace}/serviceaccounts/{name}/token",
-        json=token_request.to_dict(),
+    service_account_token = kube.create(
+        service_account_token, name=name, namespace=namespace
     )
-    resp = kube._client.send(req)
-    resp.raise_for_status()
-    token_request = TokenRequest.from_dict(resp.json())
-    return token_request.status.token
+    return service_account_token.status.token
