@@ -74,6 +74,25 @@ jobs:
       - setup
       - build
     steps:
+      - name: Get Github JWT
+        id: jwt
+        run: |
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ] || [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+          echo "::error::Missing id-token permissions. This must be set either globally in the workflow, or for the specific job performing the deploy."
+          echo "::error::For more info see https://doc.nais.io/build/how-to/build-and-deploy and/or https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs"
+          
+          exit 1
+          fi
+      
+          payload=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api.ibidem.no:deploy")
+          jwt=$(echo "$payload" | jq -r '.value')
+      
+          echo github_jwt="${jwt}" >> $GITHUB_OUTPUT 
+      - name: Exchange for deploy token
+        id: deploy-token
+        run: |
+          pipx install httpie
+          http --json GET https://api.ibidem.no/api/v1/token/ token=="${{ steps.jwt.outputs.github_jwt }}"
       - name: Download manifests from build
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
