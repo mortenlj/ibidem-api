@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from ibidem_api import probes, api, VERSION
 from ibidem_api.core.config import settings
-from ibidem_api.core.logging import get_log_config
+from ibidem_api.core.log_conf import get_log_config
 
 LOG = logging.getLogger(__name__)
 TITLE = "Ibidem micro APIs"
