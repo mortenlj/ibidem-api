@@ -11,6 +11,9 @@ description = "Publish the project to ttl.sh"
 run = "git push"
 depends = ["publish"]
 
+[tasks.local]
+run = "uv run python -m ibidem_api"
+
 [tools]
 python = "3.13"
 uv = "latest"
