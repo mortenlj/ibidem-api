@@ -1,0 +1,7 @@
+deploy_subjects:
+  - repository: mortenlj/javazone
+    namespace: default
+    service_account: deploy-javazone
+  - repository: nais/karapace
+    namespace: default
+    service_account: deploy-karapace

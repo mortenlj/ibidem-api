@@ -10,3 +10,4 @@ data:
   bind_address: "0.0.0.0"
   mode: "Release"
   root_path: "/"
+  deploy_subjects_path: "/var/run/config/yakup.ibidem.no/ibidem-api-subjects/deploy_subjects.yaml"

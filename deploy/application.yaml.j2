@@ -27,3 +27,6 @@ spec:
         initialDelaySeconds: 10
         portName: http
         path: /_/ready
+  filesFrom:
+    - configMap:
+        name: ibidem-api-subjects

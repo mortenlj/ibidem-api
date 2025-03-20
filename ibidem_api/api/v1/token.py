@@ -2,7 +2,8 @@ import logging
 from functools import lru_cache
 
 import httpx
-from fastapi import APIRouter, Depends, status
+import joserfc.errors
+from fastapi import APIRouter, Depends, HTTPException, status
 from joserfc import jwt
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry
@@ -11,6 +12,8 @@ from lightkube.models.authentication_v1 import TokenRequestSpec
 from lightkube.models.meta_v1 import ObjectMeta
 from lightkube.resources.core_v1 import ServiceAccountToken
 from pydantic import BaseModel
+
+from ibidem_api.core.config import DeploySubject, settings
 
 LOG = logging.getLogger(__name__)
 
@@ -27,8 +30,14 @@ router = APIRouter(
 )
 
 
-class TokenInput(BaseModel):
+class TokenRequest(BaseModel):
     token: str
+
+
+class TokenResponse(BaseModel):
+    token: str
+    service_account: str
+    namespace: str
 
 
 CLAIMS = JWTClaimsRegistry(
@@ -49,13 +58,6 @@ CLAIMS = JWTClaimsRegistry(
     },
 )
 
-SUBJECTS = {
-    "mortenlj/javazone": {
-        "namespace": "default",
-        "service_account": "deploy-javazone",
-    }
-}
-
 
 @lru_cache
 def github_keyset():
@@ -69,26 +71,51 @@ def kube():
     return Client()
 
 
+@lru_cache
+def subjects():
+    return {subject.repository: subject for subject in settings.deploy_subjects}
+
+
 @router.post("/", status_code=status.HTTP_200_OK)
 async def token(
-    data: TokenInput,
+    data: TokenRequest,
     keyset: KeySet = Depends(github_keyset),
     kube: Client = Depends(kube),
+    subjects: dict[str, DeploySubject] = Depends(subjects),
 ):
     """Accept a JWT token and return a new kubernetes token"""
     token = jwt.decode(data.token, key=keyset)
-    CLAIMS.validate(token.claims)
+    try:
+        CLAIMS.validate(token.claims)
+    except joserfc.errors.ExpiredTokenError:
+        LOG.warning(
+            "Received expired token for repository: %r", token.claims["repository"]
+        )
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except joserfc.errors.JoseError as e:
+        LOG.error(
+            "Error while validating claims for repository %r",
+            token.claims["repository"],
+            exc_info=True,
+        )
+        raise HTTPException(status_code=400, detail=str(e))
     LOG.info("Received valid token for repository: %r", token.claims["repository"])
-    namespace = "default"
-    name = "deploy-javazone"
-    k8s_token = await _get_k8s_token(kube, name, namespace)
+    subject = subjects.get(token.claims["repository"])
+    if subject is None:
+        LOG.error("No subject found for repository: %r", token.claims["repository"])
+        raise HTTPException(status_code=404, detail="Repository not found")
+    k8s_token = await _get_k8s_token(kube, subject.service_account, subject.namespace)
     LOG.info(
         "Received k8s token for service account %r in namespace %r: %r",
-        name,
-        namespace,
+        subject.service_account,
+        subject.namespace,
         k8s_token,
     )
-    return {"token": "valid"}
+    return TokenResponse(
+        token=k8s_token,
+        service_account=subject.service_account,
+        namespace=subject.namespace,
+    )
 
 
 async def _get_k8s_token(kube, name, namespace):

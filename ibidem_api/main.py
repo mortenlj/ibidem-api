@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import logging
 import signal
-
 import sys
+
 import uvicorn
 from fastapi import FastAPI
 
-from ibidem_api import probes, api, VERSION
+from ibidem_api import VERSION, api, probes
 from ibidem_api.core.config import settings
 from ibidem_api.core.log_conf import get_log_config
 
