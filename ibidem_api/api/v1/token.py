@@ -98,6 +98,7 @@ async def token(
             token.claims["repository"],
             exc_info=True,
         )
+        LOG.info("Token claims: %r", token.claims)
         raise HTTPException(status_code=400, detail=str(e))
     LOG.info("Received valid token for repository: %r", token.claims["repository"])
     subject = subjects.get(token.claims["repository"])
