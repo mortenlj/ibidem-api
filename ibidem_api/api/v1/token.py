@@ -47,7 +47,7 @@ CLAIMS = JWTClaimsRegistry(
     },
     aud={
         "essential": True,
-        "value": "api.ibidem.no:deploy",
+        "value": "ibidem.no:deploy",
     },
     repository={
         "essential": True,
