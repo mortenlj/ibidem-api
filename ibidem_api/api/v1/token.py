@@ -84,6 +84,7 @@ async def token(
     subjects: dict[str, DeploySubject] = Depends(subjects),
 ):
     """Accept a JWT token and return a new kubernetes token"""
+    LOG.info("Received token: %r", data.token)
     token = jwt.decode(data.token, key=keyset)
     try:
         CLAIMS.validate(token.claims)
