@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     mode: Mode = Mode.DEBUG
     bind_address: str = "127.0.0.1"
     port: int = 3000
+    advertised_cluster_address: str = "http://localhost:8001"
     root_path: str = ""
 
     deploy_subjects_path: Optional[FilePath] = None

@@ -11,3 +11,4 @@ data:
   mode: "Release"
   root_path: "/"
   deploy_subjects_path: "/var/run/config/yakup.ibidem.no/ibidem-api-subjects/deploy_subjects.yaml"
+  advertised_cluster_address: "https://k3s.home.ibidem.no:6443"
