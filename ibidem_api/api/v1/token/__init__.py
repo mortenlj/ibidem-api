@@ -32,7 +32,7 @@ router = APIRouter(
 )
 
 CA_CRT_PATH = Path("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
-CLAIMS = JWTClaimsRegistry(
+CLAIMS = dict(
     iss={
         "essential": True,
         "value": "https://token.actions.githubusercontent.com",
@@ -129,13 +129,22 @@ async def _validate_subject(data, keyset, subjects):
         LOG.error("Error while decoding token", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
+    claims_registry = JWTClaimsRegistry(**CLAIMS)
     try:
-        CLAIMS.validate(token.claims)
+        claims_registry.validate(token.claims)
     except joserfc.errors.ExpiredTokenError:
         LOG.warning(
             "Received expired token for repository: %r", token.claims["repository"]
         )
         raise HTTPException(status_code=401, detail="Token has expired")
+    except joserfc.errors.InvalidTokenError as e:
+        LOG.error(
+            "Received invalid token for repository: %r",
+            token.claims["repository"],
+            exc_info=True,
+        )
+        LOG.info("Token claims: %r", token.claims)
+        raise HTTPException(status_code=400, detail=str(e))
     except joserfc.errors.JoseError as e:
         LOG.error(
             "Error while validating claims for repository %r",
