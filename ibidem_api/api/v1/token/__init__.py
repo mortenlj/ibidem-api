@@ -90,10 +90,9 @@ async def kubeconfig(
     subject = await _validate_subject(data, keyset, subjects)
     k8s_token = await _get_k8s_token(kube, subject.service_account, subject.namespace)
     LOG.info(
-        "Received k8s token for service account %r in namespace %r: %r",
+        "Created k8s token for service account %r in namespace %r",
         subject.service_account,
         subject.namespace,
-        k8s_token,
     )
     return KubeConfig.make(ca_crt, k8s_token, settings.advertised_cluster_address)
 
@@ -122,7 +121,6 @@ async def token(
 
 
 async def _validate_subject(data, keyset, subjects):
-    LOG.info("Received token: %r", data.token)
     try:
         token = jwt.decode(data.token, key=keyset)
     except ValueError as e:
