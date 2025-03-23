@@ -2,7 +2,7 @@ import base64
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel
+from pydantic.alias_generators import to_snake
 
 
 class TokenRequest(BaseModel):
@@ -15,22 +15,26 @@ class TokenResponse(BaseModel):
     namespace: str
 
 
+def to_kebab(s: str) -> str:
+    return to_snake(s).replace("_", "-")
+
+
 class KubeConfigClusterInner(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     certificate_authority_data: Optional[str] = None
     server: str
 
 
 class KubeConfigCluster(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     cluster: KubeConfigClusterInner
     name: str
 
 
 class KubeConfigContextInner(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     cluster: str
     namespace: str
@@ -38,27 +42,27 @@ class KubeConfigContextInner(BaseModel):
 
 
 class KubeConfigContext(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     context: KubeConfigContextInner
     name: str
 
 
 class KubeConfigUserInner(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     token: str
 
 
 class KubeConfigUser(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     name: str
     user: KubeConfigUserInner
 
 
 class KubeConfig(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_kebab)
 
     api_version: str = "v1"
     kind: str = "Config"
