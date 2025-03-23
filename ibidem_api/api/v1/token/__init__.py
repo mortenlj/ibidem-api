@@ -107,12 +107,6 @@ async def token(
     """Accept a JWT token and return a new kubernetes token"""
     subject = await _validate_subject(data, keyset, subjects)
     k8s_token = await _get_k8s_token(kube, subject.service_account, subject.namespace)
-    LOG.info(
-        "Received k8s token for service account %r in namespace %r: %r",
-        subject.service_account,
-        subject.namespace,
-        k8s_token,
-    )
     return TokenResponse(
         token=k8s_token,
         service_account=subject.service_account,
