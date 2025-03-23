@@ -72,8 +72,10 @@ def subjects():
     return {subject.repository: subject for subject in settings.deploy_subjects}
 
 
+@lru_cache
 def ca_crt() -> bytes:
     if CA_CRT_PATH.is_file():
+        LOG.info("Found CA certificate at %r", CA_CRT_PATH)
         return CA_CRT_PATH.read_bytes()
     return b""
 
