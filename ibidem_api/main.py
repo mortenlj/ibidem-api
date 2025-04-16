@@ -1,13 +1,15 @@
 #!/usr/bin/env python
+import asyncio
 import logging
 import signal
 import sys
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 
 from ibidem_api import VERSION, api, probes
-from ibidem_api.core.config import settings
+from ibidem_api.core.config import settings, watch_config
 from ibidem_api.core.log_conf import get_log_config
 
 LOG = logging.getLogger(__name__)
@@ -23,10 +25,17 @@ tags_metadata.extend(probes.tags_metadata)
 tags_metadata.extend(api.tags_metadata)
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    asyncio.create_task(watch_config())
+    yield
+
+
 app = FastAPI(
     title=TITLE,
     openapi_tags=tags_metadata,
     version=VERSION,
+    lifespan=lifespan,
 )
 app.include_router(probes.router, prefix="/_")
 app.include_router(api.router, prefix="/api")

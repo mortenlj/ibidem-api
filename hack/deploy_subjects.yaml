@@ -5,3 +5,6 @@ deploy_subjects:
   - repository: nais/karapace
     namespace: default
     service_account: deploy-karapace
+  - repository: codetanks-battlemaster
+    namespace: codetanks
+    service_account: deploy-battlemaster

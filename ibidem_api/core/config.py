@@ -1,9 +1,13 @@
+import logging
 from enum import Enum
 from typing import Any, Optional, Tuple, Type
 
 from pydantic import BaseModel, FilePath
 from pydantic_settings import BaseSettings, SettingsConfigDict, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
+from watchfiles import awatch
+
+LOG = logging.getLogger(__name__)
 
 
 class SubjectLoaderSource(YamlConfigSettingsSource):
@@ -45,12 +49,12 @@ class Settings(BaseSettings):
 
     @classmethod
     def settings_customise_sources(
-            cls,
-            settings_cls: Type[BaseSettings],
-            init_settings: PydanticBaseSettingsSource,
-            env_settings: PydanticBaseSettingsSource,
-            dotenv_settings: PydanticBaseSettingsSource,
-            file_secret_settings: PydanticBaseSettingsSource,
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
     ) -> Tuple[PydanticBaseSettingsSource, ...]:
         return (
             init_settings,
@@ -60,8 +64,15 @@ class Settings(BaseSettings):
         )
 
 
+async def watch_config():
+    async for _ in awatch(settings.deploy_subjects_path):
+        settings.__init__()
+        LOG.info(f"Reloaded configuration {settings}")
+
+
 settings = Settings()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pprint import pprint
+
     pprint(settings.model_dump_json())
