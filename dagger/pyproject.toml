@@ -8,9 +8,6 @@ dependencies = [
     "toml>=0.10.2",
 ]
 
-[tool.uv.sources]
-dagger-io = { path = "sdk", editable = true }
-
 [build-system]
 requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
