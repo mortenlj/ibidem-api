@@ -1,5 +1,5 @@
 import logging
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 import httpx
@@ -51,7 +51,7 @@ CLAIMS = dict(
 )
 
 
-@lru_cache
+@cache
 def github_keyset():
     if settings.mode == Mode.DEBUG:
         # Default key used on jwt.io
@@ -62,17 +62,17 @@ def github_keyset():
     return key_set
 
 
-@lru_cache
+@cache
 def kube():
     return Client()
 
 
-@lru_cache
+@cache
 def subjects():
     return {subject.repository: subject for subject in settings.deploy_subjects}
 
 
-@lru_cache
+@cache
 def ca_crt() -> bytes:
     if CA_CRT_PATH.is_file():
         LOG.info("Found CA certificate at %r", CA_CRT_PATH)
