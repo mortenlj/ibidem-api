@@ -79,7 +79,7 @@ class IbidemApi:
         )
 
     @function
-    async def publish(self, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION) -> list[str]:
+    async def publish(self, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION) -> str:
         """Publish the application container after building and testing it on-the-fly"""
         platforms = [
             dagger.Platform("linux/amd64"),  # a.k.a. x86_64
@@ -93,7 +93,7 @@ class IbidemApi:
                 variants.append(self.docker(platform))
             cos.append(manifest.publish(f"{image}:{v}", platform_variants=await asyncio.gather(*variants)))
 
-        return await asyncio.gather(*cos)
+        return "\n".join(await asyncio.gather(*cos))
 
     @function
     async def assemble_manifests(self, image: str = "ttl.sh/mortenlj-ibidem-api",
