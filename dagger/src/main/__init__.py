@@ -1,17 +1,22 @@
 import asyncio
 from typing import Annotated
 
-import dagger
 import toml
-from dagger import dag, function, object_type, DefaultPath, Ignore
 from jinja2 import Template
+
+import dagger
+from dagger import DefaultPath, Ignore, dag, function, object_type
 
 DEVELOP_VERSION = "0.1.0-develop"
 
 
 @object_type
 class IbidemApi:
-    source: Annotated[dagger.Directory, DefaultPath("/"), Ignore(["target", ".github", "dagger", ".idea"])]
+    source: Annotated[
+        dagger.Directory,
+        DefaultPath("/"),
+        Ignore(["target", ".github", "dagger", ".idea"]),
+    ]
 
     async def resolve_python_version(self) -> str:
         """Resolve the Python version"""
@@ -20,19 +25,24 @@ class IbidemApi:
         py_version = pyproject["project"]["requires-python"]
         return py_version[2:]
 
-    async def install_mise(self, container: dagger.Container, *tools) -> dagger.Container:
+    async def install_mise(
+        self, container: dagger.Container, *tools
+    ) -> dagger.Container:
         """Install Mise in a container, and install tools"""
         installer = dag.http("https://mise.run")
         return (
-            container
-            .with_exec(["apt-get", "update", "--yes"])
+            container.with_exec(["apt-get", "update", "--yes"])
             .with_exec(["apt-get", "install", "--yes", "curl"])
             .with_env_variable("MISE_DATA_DIR", "/mise")
             .with_env_variable("MISE_CONFIG_DIR", "/mise")
             .with_env_variable("MISE_CACHE_DIR", "/mise/cache")
             .with_env_variable("MISE_INSTALL_PATH", "/usr/local/bin/mise")
             .with_env_variable("PATH", "/mise/shims:${PATH}", expand=True)
-            .with_new_file("/usr/local/bin/mise-installer", await installer.contents(), permissions=755)
+            .with_new_file(
+                "/usr/local/bin/mise-installer",
+                await installer.contents(),
+                permissions=755,
+            )
             .with_exec(["/usr/local/bin/mise-installer"])
             .with_exec(["mise", "trust", "/app/mise.toml"])
             .with_file("/app/mise.toml", self.source.file(".config/mise/config.toml"))
@@ -43,27 +53,46 @@ class IbidemApi:
     async def deps(self, platform: dagger.Platform | None = None) -> dagger.Container:
         """Install dependencies in a container"""
         python_version = await self.resolve_python_version()
-        base_container = dag.container(platform=platform).from_(f"python:{python_version}-slim").with_workdir("/app")
+        base_container = (
+            dag.container(platform=platform)
+            .from_(f"python:{python_version}-slim")
+            .with_workdir("/app")
+        )
         return (
             (await self.install_mise(base_container, "uv"))
             .with_file("/app/pyproject.toml", self.source.file("pyproject.toml"))
             .with_file("/app/uv.lock", self.source.file("uv.lock"))
-            .with_exec(["uv", "sync", "--no-install-workspace", "--locked", "--compile-bytecode"])
+            .with_exec(
+                [
+                    "uv",
+                    "sync",
+                    "--no-install-workspace",
+                    "--locked",
+                    "--compile-bytecode",
+                ]
+            )
         )
 
     @function
-    async def build(self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION) -> dagger.Container:
+    async def build(
+        self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION
+    ) -> dagger.Container:
         """Build the application"""
         return (
             (await self.deps(platform))
             .with_directory("/app/ibidem_api", self.source.directory("ibidem_api"))
             .with_file("/app/README.rst", self.source.file("README.rst"))
-            .with_new_file("/app/ibidem_api/__init__.py", f"VERSION = \"1.{version.replace("-", "+")}\"")
+            .with_new_file(
+                "/app/ibidem_api/__init__.py",
+                f"VERSION = \"1.{version.replace("-", "+")}\"",
+            )
             .with_exec(["uv", "sync", "--frozen", "--no-editable"])
         )
 
     @function
-    async def docker(self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION) -> dagger.Container:
+    async def docker(
+        self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION
+    ) -> dagger.Container:
         """Build the Docker container"""
         python_version = await self.resolve_python_version()
         deps = await self.deps(platform)
@@ -79,7 +108,9 @@ class IbidemApi:
         )
 
     @function
-    async def publish(self, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION) -> str:
+    async def publish(
+        self, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION
+    ) -> str:
         """Publish the application container after building and testing it on-the-fly"""
         platforms = [
             dagger.Platform("linux/amd64"),  # a.k.a. x86_64
@@ -91,13 +122,18 @@ class IbidemApi:
             variants = []
             for platform in platforms:
                 variants.append(self.docker(platform))
-            cos.append(manifest.publish(f"{image}:{v}", platform_variants=await asyncio.gather(*variants)))
+            cos.append(
+                manifest.publish(
+                    f"{image}:{v}", platform_variants=await asyncio.gather(*variants)
+                )
+            )
 
         return "\n".join(await asyncio.gather(*cos))
 
     @function
-    async def assemble_manifests(self, image: str = "ttl.sh/mortenlj-ibidem-api",
-                                 version: str = DEVELOP_VERSION) -> dagger.File:
+    async def assemble_manifests(
+        self, image: str = "ttl.sh/mortenlj-ibidem-api", version: str = DEVELOP_VERSION
+    ) -> dagger.File:
         """Assemble manifests"""
         template_dir = self.source.directory("deploy")
         documents = []
@@ -112,4 +148,6 @@ class IbidemApi:
                 documents.append(contents)
             else:
                 documents.append("---\n" + contents)
-        return await self.source.with_new_file("deploy.yaml", "\n".join(documents)).file("deploy.yaml")
+        return await self.source.with_new_file(
+            "deploy.yaml", "\n".join(documents)
+        ).file("deploy.yaml")
