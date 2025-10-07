@@ -16,5 +16,5 @@ run = "uv run python -m ibidem_api"
 env = { "DEPLOY_SUBJECTS_PATH" = "./hack/deploy_subjects.yaml" }
 
 [tools]
-python = "3.13"
+python = "3.14.0"
 uv = "latest"
