@@ -25,7 +25,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "regex"
-path = "ibidem_api/__init__.py"
+path = "ibidem/ibidem_api/__init__.py"
 
 [tool.uv]
 dev-dependencies = [

@@ -14,8 +14,8 @@ from lightkube.models.authentication_v1 import TokenRequestSpec
 from lightkube.models.meta_v1 import ObjectMeta
 from lightkube.resources.core_v1 import ServiceAccountToken
 
-from ibidem_api.api.v1.token.models import KubeConfig, TokenRequest, TokenResponse
-from ibidem_api.core.config import DeploySubject, Mode, settings
+from .models import KubeConfig, TokenRequest, TokenResponse
+from ibidem.ibidem_api.core.config import DeploySubject, Mode, settings
 
 LOG = logging.getLogger(__name__)
 

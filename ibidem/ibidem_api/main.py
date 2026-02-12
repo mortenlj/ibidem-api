@@ -8,9 +8,9 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from ibidem_api import VERSION, api, probes
-from ibidem_api.core.config import settings, watch_config
-from ibidem_api.core.log_conf import get_log_config
+from ibidem.ibidem_api import VERSION, api, probes
+from ibidem.ibidem_api.core.config import settings, watch_config
+from ibidem.ibidem_api.core.log_conf import get_log_config
 
 LOG = logging.getLogger(__name__)
 TITLE = "Ibidem micro APIs"
@@ -50,7 +50,7 @@ def main():
     try:
         print(f"Starting {TITLE} with configuration {settings}")
         uvicorn.run(
-            "ibidem_api.main:app",
+            "ibidem.ibidem_api.main:app",
             host=settings.bind_address,
             port=settings.port,
             proxy_headers=True,

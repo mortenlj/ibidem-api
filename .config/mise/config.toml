@@ -12,9 +12,10 @@ run = "git push"
 depends = ["publish"]
 
 [tasks.local]
-run = "uv run python -m ibidem_api"
+run = "uv run python -m ibidem.ibidem_api"
 env = { "DEPLOY_SUBJECTS_PATH" = "./hack/deploy_subjects.yaml" }
 
 [tools]
+dagger = { version = "v0.18.3", postinstall = "dagger --silent" }
 python = "3.14.0"
 uv = "latest"

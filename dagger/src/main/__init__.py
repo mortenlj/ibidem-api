@@ -50,7 +50,8 @@ class IbidemApi:
         )
 
     @function
-    async def deps(self, platform: dagger.Platform | None = None) -> dagger.Container:
+    async def deps(self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION
+    ) -> dagger.Container:
         """Install dependencies in a container"""
         python_version = await self.resolve_python_version()
         base_container = (
@@ -79,11 +80,11 @@ class IbidemApi:
     ) -> dagger.Container:
         """Build the application"""
         return (
-            (await self.deps(platform))
-            .with_directory("/app/ibidem_api", self.source.directory("ibidem_api"))
+            (await self.deps(platform, version))
+            .with_directory("/app/ibidem", self.source.directory("ibidem"))
             .with_file("/app/README.rst", self.source.file("README.rst"))
             .with_new_file(
-                "/app/ibidem_api/__init__.py",
+                "/app/ibidem/ibidem_api/__init__.py",
                 f"VERSION = \"1.{version.replace("-", "+")}\"",
             )
             .with_exec(["uv", "sync", "--frozen", "--no-editable"])
@@ -95,16 +96,16 @@ class IbidemApi:
     ) -> dagger.Container:
         """Build the Docker container"""
         python_version = await self.resolve_python_version()
-        deps = await self.deps(platform)
+        deps = await self.deps(platform, version)
         src = await self.build(platform, version)
         return (
             dag.container(platform=platform)
             .from_(f"python:{python_version}-slim")
             .with_workdir("/app")
             .with_directory("/app/.venv", deps.directory("/app/.venv"))
-            .with_directory("/app/ibidem_api", src.directory("/app/ibidem_api"))
+            .with_directory("/app/ibidem", src.directory("/app/ibidem"))
             .with_env_variable("PATH", "/app/.venv/bin:${PATH}", expand=True)
-            .with_entrypoint(["/app/.venv/bin/python", "-m", "ibidem_api"])
+            .with_entrypoint(["/app/.venv/bin/python", "-m", "ibidem.ibidem_api"])
         )
 
     @function
