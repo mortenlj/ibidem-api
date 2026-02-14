@@ -19,15 +19,24 @@ dynamic = [
     "version",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",
+    "pytest-cov==7.0.0",
+    "pytest-sugar==1.1.1",
+    "ruff>=0.6.7",
+]
+
 [build-system]
 requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
-[tool.hatch.version]
-source = "regex"
-path = "ibidem/ibidem_api/__init__.py"
+[tool.hatch.build.targets.sdist]
+include = ["ibidem"]
 
-[tool.uv]
-dev-dependencies = [
-    "ruff>=0.6.7",
-]
+[tool.hatch.build.targets.wheel]
+include = ["ibidem"]
+
+[tool.hatch.version]
+source = "env"
+variable = "VERSION"

@@ -45,12 +45,13 @@ class IbidemApi:
             )
             .with_exec(["/usr/local/bin/mise-installer"])
             .with_exec(["mise", "trust", "/app/mise.toml"])
-            .with_file("/app/mise.toml", self.source.file(".config/mise/config.toml"))
+            .with_file("/app/mise.toml", self.source.file("mise.toml"))
             .with_exec(["mise", "install", *tools])
         )
 
     @function
-    async def deps(self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION
+    async def deps(
+        self, platform: dagger.Platform | None = None, version: str = DEVELOP_VERSION
     ) -> dagger.Container:
         """Install dependencies in a container"""
         python_version = await self.resolve_python_version()
@@ -85,7 +86,7 @@ class IbidemApi:
             .with_file("/app/README.rst", self.source.file("README.rst"))
             .with_new_file(
                 "/app/ibidem/ibidem_api/__init__.py",
-                f"VERSION = \"1.{version.replace("-", "+")}\"",
+                f'VERSION = "1.{version.replace("-", "+")}"',
             )
             .with_exec(["uv", "sync", "--frozen", "--no-editable"])
         )

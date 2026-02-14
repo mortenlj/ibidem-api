@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from ibidem.ibidem_api import VERSION, api, probes
+from ibidem.ibidem_api import get_version, api, probes
 from ibidem.ibidem_api.core.config import settings, watch_config
 from ibidem.ibidem_api.core.log_conf import get_log_config
 
@@ -34,7 +34,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title=TITLE,
     openapi_tags=tags_metadata,
-    version=VERSION,
+    version=get_version(),
     lifespan=lifespan,
 )
 app.include_router(probes.router, prefix="/_")
@@ -48,7 +48,7 @@ def main():
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, signal_handler)
     try:
-        print(f"Starting {TITLE} with configuration {settings}")
+        print(f"Starting {app.title} ({app.version} with configuration {settings}")
         uvicorn.run(
             "ibidem.ibidem_api.main:app",
             host=settings.bind_address,

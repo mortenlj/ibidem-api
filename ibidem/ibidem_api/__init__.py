@@ -1,1 +1,5 @@
-VERSION = "0.1.0+develop"
+from importlib.metadata import version
+
+
+def get_version():
+    return version("ibidem-api")

@@ -1,2 +1,69 @@
 [task_config]
 includes = [".config/mise-lib/virtual_tasks.toml", ".config/mise-lib"]
+
+[settings]
+env_shell_expand = true
+
+[env]
+VERSION = "${MORTENLJ_MISE_LIB_CLEAN_VERSION:-0.1.0+develop}"
+
+[tools]
+python = "3.13"
+uv = "latest"
+
+# TODO: Remove these when mise-lib conversion complete
+[tasks.dbuild]
+run = "dagger call build"
+description = "Build the project in dagger"
+
+# TODO: Remove these when mise-lib conversion complete
+[tasks.publish]
+run = "dagger call publish"
+description = "Publish the project to ttl.sh"
+
+# TODO: Remove these when mise-lib conversion complete
+[tasks.push]
+run = "git push"
+depends = ["publish"]
+
+# TODO: Remove these when mise-lib conversion complete
+[tasks.local]
+run = "uv run python -m ibidem.ibidem_api"
+env = { "DEPLOY_SUBJECTS_PATH" = "./hack/deploy_subjects.yaml" }
+
+[tasks.test]
+# TODO: Add tests
+#depends = ["python:test"]
+description = "Run tests"
+
+[tasks.fmt]
+depends = ["python:fmt"]
+description = "Format source"
+
+[tasks.fmt-check]
+depends = ["python:fmt-check"]
+description = "Check formatting"
+
+[tasks.lint]
+depends = ["python:lint"]
+description = "Lint the project"
+
+[tasks.lint-fix]
+depends = ["python:lint-fix"]
+description = "Run lint fixers"
+
+[tasks.ci]
+depends = ["test", "fmt-check", "lint"]
+description = "Run CI tasks"
+
+[tasks.build]
+depends = ["python:build"]
+description = "Build the project in debug mode"
+sources = ["**/*.py", "uv.lock", "pyproject.toml"]
+outputs = ["dist/ibidem_api-*.tar.gz", "dist/ibidem_api-*.whl"]
+
+[tasks.release-build]
+depends = ["python:release-build"]
+description = "Build the project"
+sources = ["**/*.py", "uv.lock", "pyproject.toml"]
+outputs = ["dist/ibidem_api-*.tar.gz", "dist/ibidem_api-*.whl"]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#MISE description="Update the project to use a newer version of Python"
-#USAGE arg <version> help="The version of Python to use, in the form <major>.<minor>"
+# [MISE] description="Update the project to use a newer version of Python"
+# [USAGE] arg <version> help="The version of Python to use, in the form <major>.<minor>"
 
 import os
 import re
@@ -24,7 +24,6 @@ def _update_pyproject(version):
     _update_file("pyproject.toml", r"requires-python = \"~=(\d\.\d+)\"", version)
 
 
-
 def _update_mise(version):
     print("Telling mise to use the new version ...")
     subprocess.run(["mise", "use", f"python@{version}"], check=True)
@@ -43,5 +42,5 @@ def main():
     _sync_uv()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -65,9 +65,10 @@ class Settings(BaseSettings):
 
 
 async def watch_config():
-    async for _ in awatch(settings.deploy_subjects_path):
-        settings.__init__()
-        LOG.info(f"Reloaded configuration {settings}")
+    if settings.deploy_subjects_path:
+        async for _ in awatch(settings.deploy_subjects_path):
+            settings.__init__()
+            LOG.info(f"Reloaded configuration {settings}")
 
 
 settings = Settings()

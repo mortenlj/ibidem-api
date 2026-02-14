@@ -19,15 +19,17 @@ router = APIRouter(
 )
 
 
-@router.get("/dietpi",
-            response_class=RedirectResponse,
-            status_code=status.HTTP_302_FOUND,
-            responses={
-                status.HTTP_503_SERVICE_UNAVAILABLE: {
-                    "description": "DietPi version URL is not available",
-                    "model": str,
-                },
-            })
+@router.get(
+    "/dietpi",
+    response_class=RedirectResponse,
+    status_code=status.HTTP_302_FOUND,
+    responses={
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "description": "DietPi version URL is not available",
+            "model": str,
+        },
+    },
+)
 async def dietpi(req: Request):
     """Version redirect for Dietpi
 
@@ -37,8 +39,10 @@ async def dietpi(req: Request):
     try:
         resp.raise_for_status()
     except httpx.HTTPStatusError:
-        return JSONResponse("Failed to get version information from DietPi",
-                            status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return JSONResponse(
+            "Failed to get version information from DietPi",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
     data = resp.text
     major, minor, patch = (0, 0, 0)
     for line in data.splitlines(keepends=False):
