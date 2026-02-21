@@ -13,7 +13,9 @@ uv = "latest"
 
 [tasks.local]
 run = "uv run python -m ibidem.ibidem_api"
-env = { "DEPLOY_SUBJECTS_PATH" = "./hack/deploy_subjects.yaml" }
+[tasks.local.env]
+_.file = ".env"
+DEPLOY_SUBJECTS_PATH = "./hack/deploy_subjects.yaml"
 
 [tasks.test]
 # TODO: Add tests

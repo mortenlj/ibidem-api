@@ -7,14 +7,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from hishel.httpx import AsyncCacheClient
-from pydantic import BaseModel
 
 from ibidem.ibidem_api import get_version
+from ibidem.ibidem_api.api.v1.weather.models import WeatherResponse, METJSONForecast
+from ibidem.ibidem_api.core.config import settings
 
 LOG = logging.getLogger(__name__)
 
 ICON_BASE_URL = "https://raw.githubusercontent.com/metno/weathericons/refs/heads/main/weather/png/"
 ICON_BASE_DIRECTORY = Path(tempfile.gettempdir()) / "weather_icons"
+
+NOWCAST_URL = "https://api.met.no/weatherapi/nowcast/2.0/complete"
 
 tags_metadata = [
     {
@@ -28,11 +31,6 @@ router = APIRouter(
 )
 
 
-class WeatherResponse(BaseModel):
-    icon_name: str
-    temperature: decimal.Decimal
-
-
 async def http_client():
     headers = {"user-agent": f"ibidem-api/{get_version()} +https://github.com/mortenlj/ibidem-api"}
     async with AsyncCacheClient(follow_redirects=True, headers=headers) as client:
@@ -40,8 +38,21 @@ async def http_client():
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-async def weather() -> WeatherResponse:
-    return WeatherResponse(icon_name="heavysnowshowersandthunder_polartwilight", temperature=decimal.Decimal("-99.9"))
+async def weather(http_client: Annotated[AsyncCacheClient, Depends(http_client)]) -> WeatherResponse:
+    LOG.info("Looking up weather for %s", settings.forecast_location)
+    params = {
+        "lat": round(settings.forecast_location.latitude, 4),
+        "lon": round(settings.forecast_location.longtitude, 4),
+        "altitude": settings.forecast_location.altitude
+    }
+    resp = await http_client.get(NOWCAST_URL, params=params)
+    resp.raise_for_status()
+    data = resp.json()
+    forecast = METJSONForecast.model_validate(data)
+    forecast_instant = forecast.properties.timeseries[0]
+    icon_name = forecast_instant.data.next_1_hours.summary.symbol_code
+    temperature = forecast_instant.data.instant.details.air_temperature
+    return WeatherResponse(icon_name=icon_name, temperature=temperature)
 
 
 @router.get("/icon/{icon_name}", status_code=status.HTTP_200_OK, response_class=FileResponse)

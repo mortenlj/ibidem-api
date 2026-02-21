@@ -1,3 +1,4 @@
+import decimal
 import logging
 from enum import Enum
 from typing import Any, Optional, Tuple, Type
@@ -31,12 +32,21 @@ class DeploySubject(BaseModel):
     service_account: str
 
 
+class ForecastLocation(BaseModel):
+    latitude: decimal.Decimal
+    longtitude: decimal.Decimal
+    altitude: decimal.Decimal
+
+
+
 class Settings(BaseSettings):
     mode: Mode = Mode.DEBUG
     bind_address: str = "127.0.0.1"
     port: int = 3000
     advertised_cluster_address: str = "http://localhost:8001"
     root_path: str = ""
+
+    forecast_location: Optional[ForecastLocation] = None
 
     deploy_subjects_path: Optional[FilePath] = None
     deploy_subjects: list[DeploySubject] = []
