@@ -25,7 +25,11 @@ def _update_pyproject(version):
 
 
 def _update_dockerfile(version):
-    _update_file("Dockerfile", r"FROM ghcr.io/mortenlj/mise-lib/python-(\d\.\d+):latest AS docker", version)
+    _update_file(
+        "Dockerfile",
+        r"FROM ghcr.io/mortenlj/mise-lib/python-(\d\.\d+):latest AS docker",
+        version,
+    )
 
 
 def _update_mise(version):
