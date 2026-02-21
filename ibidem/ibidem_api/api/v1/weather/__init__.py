@@ -4,10 +4,10 @@ import tempfile
 from pathlib import Path
 from typing import Annotated
 
-import httpx
-from fastapi import APIRouter, status, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
+from hishel.httpx import AsyncCacheClient
+from pydantic import BaseModel
 
 from ibidem.ibidem_api import get_version
 
@@ -35,7 +35,7 @@ class WeatherResponse(BaseModel):
 
 async def http_client():
     headers = {"user-agent": f"ibidem-api/{get_version()} +https://github.com/mortenlj/ibidem-api"}
-    async with httpx.AsyncClient(follow_redirects=True, headers=headers) as client:
+    async with AsyncCacheClient(follow_redirects=True, headers=headers) as client:
         yield client
 
 
@@ -45,7 +45,7 @@ async def weather() -> WeatherResponse:
 
 
 @router.get("/icon/{icon_name}", status_code=status.HTTP_200_OK, response_class=FileResponse)
-async def retrieve_icon(icon_name, http_client: Annotated[httpx.AsyncClient, Depends(http_client)]) -> Path:
+async def retrieve_icon(icon_name, http_client: Annotated[AsyncCacheClient, Depends(http_client)]) -> Path:
     icon_filename = f"{icon_name}.png"
     icon_path = ICON_BASE_DIRECTORY / icon_filename
     if not icon_path.exists():
