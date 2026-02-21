@@ -61,6 +61,7 @@ jobs:
       - name: Build and possibly push docker image
         uses: docker/build-push-action@v6
         with:
+          context: "."
           push: "${{ github.ref == 'refs/heads/main' }}"
           platforms: linux/amd64,linux/arm64
           tags: |
