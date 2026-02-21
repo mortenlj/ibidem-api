@@ -13,7 +13,7 @@ from ibidem.ibidem_api.core.config import settings
 
 LOG = logging.getLogger(__name__)
 
-ICON_BASE_URL = "https://raw.githubusercontent.com/metno/weathericons/refs/heads/main/weather/png/"
+ICON_BASE_URL = "https://raw.githubusercontent.com/metno/weathericons/refs/heads/main/weather/png"
 ICON_BASE_DIRECTORY = Path(tempfile.gettempdir()) / "weather_icons"
 
 NOWCAST_URL = "https://api.met.no/weatherapi/nowcast/2.0/complete"
@@ -38,7 +38,6 @@ async def http_client():
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def weather(http_client: Annotated[AsyncCacheClient, Depends(http_client)]) -> WeatherResponse:
-    LOG.info("Looking up weather for %s", settings.forecast_location)
     params = {
         "lat": round(settings.forecast_location.latitude, 4),
         "lon": round(settings.forecast_location.longtitude, 4),
