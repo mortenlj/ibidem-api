@@ -11,22 +11,6 @@ VERSION = "${MORTENLJ_MISE_LIB_CLEAN_VERSION:-0.1.0+develop}"
 python = "3.13"
 uv = "latest"
 
-# TODO: Remove these when mise-lib conversion complete
-[tasks.dbuild]
-run = "dagger call build"
-description = "Build the project in dagger"
-
-# TODO: Remove these when mise-lib conversion complete
-[tasks.publish]
-run = "dagger call publish"
-description = "Publish the project to ttl.sh"
-
-# TODO: Remove these when mise-lib conversion complete
-[tasks.push]
-run = "git push"
-depends = ["publish"]
-
-# TODO: Remove these when mise-lib conversion complete
 [tasks.local]
 run = "uv run python -m ibidem.ibidem_api"
 env = { "DEPLOY_SUBJECTS_PATH" = "./hack/deploy_subjects.yaml" }

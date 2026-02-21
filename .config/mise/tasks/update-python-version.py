@@ -24,6 +24,10 @@ def _update_pyproject(version):
     _update_file("pyproject.toml", r"requires-python = \"~=(\d\.\d+)\"", version)
 
 
+def _update_dockerfile(version):
+    _update_file("Dockerfile", r"FROM ghcr.io/mortenlj/mise-lib/python-(\d\.\d+):latest AS docker", version)
+
+
 def _update_mise(version):
     print("Telling mise to use the new version ...")
     subprocess.run(["mise", "use", f"python@{version}"], check=True)
@@ -39,6 +43,7 @@ def main():
     print(f"Updating to Python {version} ...")
     _update_pyproject(version)
     _update_mise(version)
+    _update_dockerfile(version)
     _sync_uv()
 
 

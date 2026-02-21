@@ -251,5 +251,3 @@ dmypy.json
 cython_debug/
 
 deploy.yaml
-
-mise.local.toml

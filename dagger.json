@@ -1,8 +1,0 @@
-{
-  "name": "ibidem-api",
-  "engineVersion": "v0.18.3",
-  "sdk": {
-    "source": "python"
-  },
-  "source": "dagger"
-}
