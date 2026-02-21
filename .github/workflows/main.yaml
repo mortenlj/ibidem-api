@@ -64,12 +64,12 @@ jobs:
           push: "${{ github.ref == 'refs/heads/main' }}"
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.main_image }}:${{ needs.setup.outputs.clean-version }}
+            ${{ env.main_image }}:${{ fromJSON(needs.setup.outputs.clean-version) }}
             ${{ env.main_image }}:latest
       - name: Assemble manifests
         run: mise run k8s:manifests "${{ env.main_image }}"
         env:
-          MORTENLJ_MISE_LIB_CLEAN_VERSION: ${{ needs.setup.outputs.clean-version }}
+          MORTENLJ_MISE_LIB_CLEAN_VERSION: ${{ fromJSON(needs.setup.outputs.clean-version) }}
       - name: Save manifests for later deploy
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
