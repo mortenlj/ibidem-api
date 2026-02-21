@@ -40,3 +40,6 @@ include = ["ibidem"]
 [tool.hatch.version]
 source = "env"
 variable = "VERSION"
+
+[tool.ruff]
+line-length = 120

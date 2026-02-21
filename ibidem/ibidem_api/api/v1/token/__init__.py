@@ -126,9 +126,7 @@ async def _validate_subject(data, keyset, subjects):
     try:
         claims_registry.validate(token.claims)
     except joserfc.errors.ExpiredTokenError:
-        LOG.warning(
-            "Received expired token for repository: %r", token.claims["repository"]
-        )
+        LOG.warning("Received expired token for repository: %r", token.claims["repository"])
         raise HTTPException(status_code=401, detail="Token has expired")
     except joserfc.errors.InvalidTokenError as e:
         LOG.error(
@@ -159,7 +157,5 @@ async def _get_k8s_token(kube, name, namespace):
         metadata=ObjectMeta(name=name, namespace=namespace),
         spec=TokenRequestSpec(audiences=[]),
     )
-    service_account_token = kube.create(
-        service_account_token, name=name, namespace=namespace
-    )
+    service_account_token = kube.create(service_account_token, name=name, namespace=namespace)
     return service_account_token.status.token
