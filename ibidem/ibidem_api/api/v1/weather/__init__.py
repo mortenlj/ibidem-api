@@ -1,4 +1,3 @@
-import decimal
 import logging
 import tempfile
 from pathlib import Path
@@ -43,7 +42,7 @@ async def weather(http_client: Annotated[AsyncCacheClient, Depends(http_client)]
     params = {
         "lat": round(settings.forecast_location.latitude, 4),
         "lon": round(settings.forecast_location.longtitude, 4),
-        "altitude": settings.forecast_location.altitude
+        "altitude": settings.forecast_location.altitude,
     }
     resp = await http_client.get(NOWCAST_URL, params=params)
     resp.raise_for_status()

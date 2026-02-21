@@ -38,7 +38,6 @@ class ForecastLocation(BaseModel):
     altitude: decimal.Decimal
 
 
-
 class Settings(BaseSettings):
     mode: Mode = Mode.DEBUG
     bind_address: str = "127.0.0.1"
