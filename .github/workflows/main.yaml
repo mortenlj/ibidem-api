@@ -1,69 +1,85 @@
-name: Build
+name: ibidem-api
+
+on:
+  push:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-on:
-  push:
-  workflow_dispatch:
-
-env:
-  IMAGE: ghcr.io/${{ github.repository }}
-
 jobs:
   setup:
-    name: Set variables
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - name: "Set image version"
-        id: constants
-        run: |
-          export version="$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')"
-          echo "VERSION=${version}" >> ${GITHUB_OUTPUT}
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        with:
+          fetch-depth: 0
+          submodules: "true"
+      - uses: jdx/mise-action@d16887ba50704baed7de72bd1e82e04391e4457a # v3
+      - run: mise run extract-ci-info
+        id: ci-info
     outputs:
-      VERSION: "${{ steps.constants.outputs.VERSION }}"
+      ci-tasks: ${{ steps.ci-info.outputs.ci-tasks }}
+      run-publish: ${{ steps.ci-info.outputs.run-publish }}
+      artifacts: ${{ steps.ci-info.outputs.artifacts }}
+      version: ${{ steps.ci-info.outputs.version }}
+      clean-version: ${{ steps.ci-info.outputs.clean-version }}
+      release-build-tasks: ${{ steps.ci-info.outputs.release-build-tasks }}
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: setup
     permissions:
-      contents: read
-      id-token: write
       packages: write
       checks: write
       pull-requests: write
+    needs: setup
     env:
       VERSION: "${{ needs.setup.outputs.VERSION }}"
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - uses: chartboost/ruff-action@e18ae971ccee1b2d7bbef113930f00c670b78da4 # v1
+      - uses: jdx/mise-action@d16887ba50704baed7de72bd1e82e04391e4457a # v3
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Login to GitHub Packages Docker Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push images
-        uses: dagger/dagger-for-github@b81317a976cb7f7125469707321849737cd1b3bc # v7
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
         with:
-          version: "latest"
-          verb: call
-          args: publish "--image=${IMAGE}" "--version=${VERSION}"
-          cloud-token: "${{ secrets.DAGGER_CLOUD_TOKEN }}"
+          fetch-depth: 0
+          submodules: "true"
+      - name: Build and possibly push docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: "."
+          push: "${{ github.ref == 'refs/heads/main' }}"
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ env.main_image }}:${{ env.VERSION }}
+            ${{ env.main_image }}:latest
       - name: Assemble manifests
-        uses: dagger/dagger-for-github@b81317a976cb7f7125469707321849737cd1b3bc # v7
-        with:
-          version: "latest"
-          verb: call
-          args: assemble-manifests "--image=${IMAGE}" "--version=${VERSION}" --output=deploy.yaml
-          cloud-token: "${{ secrets.DAGGER_CLOUD_TOKEN }}"
+        run: mise run k8s:manifests "${{ env.main_image }}"
+        env:
+          MORTENLJ_MISE_LIB_CLEAN_VERSION: ${{ env.VERSION }}
       - name: Save manifests for later deploy
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: manifests
-          path: deploy.yaml
+          path: mise-output/deploy.yaml
+  #      - name: Publish Test Results
+  #        uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf # v2
+  #        if: always()
+  #        with:
+  #          files: |
+  #            xunit.xml
   deploy:
     name: Deploy
     if: github.ref == 'refs/heads/main'
@@ -74,21 +90,12 @@ jobs:
       - setup
       - build
     steps:
+      - name: Get kubeconfig
+        uses: mortenlj/kube-actions/get-kubeconfig@main
       - name: Download manifests from build
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: manifests
-      - name: Install and configure kubectl
-        run: |
-          mkdir -p /tmp/kubectl
-          cd /tmp/kubectl
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
-          echo "$(<kubectl.sha256)  kubectl" | sha256sum --check
-          chmod +x kubectl
-          echo "${{ secrets.KUBECONFIG }}" > /tmp/kubectl/kubeconfig
-          echo "KUBECONFIG=/tmp/kubectl/kubeconfig" >> ${GITHUB_ENV}
-          echo "PATH=/tmp/kubectl:${PATH}" >> ${GITHUB_ENV}
       - id: join-zt
         name: Join ZeroTier network
         uses: mortenlj/zerotier-actions/join-zt@main
@@ -97,8 +104,7 @@ jobs:
           api_accesstoken: ${{ secrets.ZEROTIER_API_ACCESSTOKEN }}
           ping_target: k3s.home.ibidem.no
       - name: Run kubectl apply
-        run: |
-          kubectl apply --namespace=default --filename=deploy.yaml --selector=app=ibidem-api --prune=true --wait=true --timeout=60s
+        uses: mortenlj/kube-actions/apply-manifest@main
       - name: Leave ZeroTier network
         if: always()
         uses: mortenlj/zerotier-actions/leave-zt@main

@@ -7,7 +7,7 @@ metadata:
   labels:
     app: ibidem-api
 spec:
-  image: "{{ image }}:{{ version }}"
+  image: "{{ environ('IMAGE') }}:{{ environ('VERSION') }}"
   ports:
     http:
       ingress:
