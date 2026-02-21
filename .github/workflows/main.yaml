@@ -2,6 +2,10 @@ name: ibidem-api
 
 on:
   push:
+  workflow_dispatch:
+
+env:
+  main_image: ghcr.io/${{ github.repository }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,8 +38,6 @@ jobs:
       checks: write
       pull-requests: write
     needs: setup
-    env:
-      VERSION: "${{ needs.setup.outputs.VERSION }}"
     steps:
       - uses: jdx/mise-action@d16887ba50704baed7de72bd1e82e04391e4457a # v3
       - name: Set up QEMU
@@ -59,16 +61,15 @@ jobs:
       - name: Build and possibly push docker image
         uses: docker/build-push-action@v6
         with:
-          context: "."
           push: "${{ github.ref == 'refs/heads/main' }}"
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.main_image }}:${{ env.VERSION }}
+            ${{ env.main_image }}:${{ needs.setup.outputs.clean-version }}
             ${{ env.main_image }}:latest
       - name: Assemble manifests
         run: mise run k8s:manifests "${{ env.main_image }}"
         env:
-          MORTENLJ_MISE_LIB_CLEAN_VERSION: ${{ env.VERSION }}
+          MORTENLJ_MISE_LIB_CLEAN_VERSION: ${{ needs.setup.outputs.clean-version }}
       - name: Save manifests for later deploy
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
