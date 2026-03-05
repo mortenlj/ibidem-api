@@ -83,6 +83,8 @@ jobs:
   #          files: |
   #            xunit.xml
   deploy:
+    permissions:
+      id-token: write # This is required for requesting the JWT
     needs:
       - setup
       - build
