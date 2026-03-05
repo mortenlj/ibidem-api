@@ -94,20 +94,7 @@ jobs:
       ZEROTIER_API_ACCESSTOKEN: ${{ secrets.ZEROTIER_API_ACCESSTOKEN }}
 
   cleanup:
-    name: Cleanup
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    needs: build
     permissions:
       packages: write
-    steps:
-      - name: Cleanup main images
-        uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          keep-n-tagged: 5
-          older-than: 2 weeks
-          delete-untagged: true
-          delete-ghost-images: true
-          delete-orphaned-images: true
-          delete-partial-images: true
+    needs: build
+    uses: mortenlj/mise-lib/.github/workflows/cleanup.yaml@main
