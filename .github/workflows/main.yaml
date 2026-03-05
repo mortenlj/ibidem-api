@@ -23,7 +23,7 @@ jobs:
       main-image: ghcr.io/${{ github.repository }}
       clean-version: ${{ fromJSON(needs.setup.outputs.clean-version) }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     permissions:
