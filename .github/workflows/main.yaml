@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   setup:
-    uses: mortenlj/mise-lib/.github/workflows/jobs/setup.yaml@main
+    uses: mortenlj/mise-lib/.github/workflows/setup.yaml@main
 
   build:
     permissions:
