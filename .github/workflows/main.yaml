@@ -22,6 +22,7 @@ jobs:
     with:
       main-image: ghcr.io/${{ github.repository }}
       clean-version: ${{ fromJSON(needs.setup.outputs.clean-version) }}
+      tool-versions: ${{ needs.setup.outputs.tool-versions }}
     secrets:
       GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
